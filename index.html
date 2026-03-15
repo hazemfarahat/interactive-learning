@@ -1,0 +1,1108 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deutschland Karte & Quiz</title>
+
+    <!-- D3.js for map rendering -->
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://d3js.org/topojson.v3.min.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        .map-section, .quiz-section {
+            background: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+        }
+
+        .interactive-map {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        #map-svg {
+            width: 100%;
+            height: auto;
+            border: 3px solid #333;
+            background: white;
+        }
+
+        .state-region {
+            fill: #c8e6c9;
+            stroke: white;
+            stroke-width: 1.5;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .state-region:hover {
+            fill: #81c784;
+            stroke: #2e7d32;
+            stroke-width: 2.5;
+        }
+
+        .state-region.highlighted {
+            fill: #ffd54f;
+            stroke: #f57c00;
+            stroke-width: 3;
+        }
+
+        .state-region.empty {
+            fill: white;
+            stroke: #bdbdbd;
+            stroke-width: 1.5;
+        }
+
+        .state-region.correct {
+            fill: #81c784;
+            stroke: #2e7d32;
+            stroke-width: 2;
+        }
+
+        .state-region.current-question {
+            fill: #fff59d;
+            stroke: #f57c00;
+            stroke-width: 3;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .neighbor-region {
+            fill: #f5f5f5;
+            stroke: #90a4ae;
+            stroke-width: 1.5;
+            stroke-dasharray: 3,2;
+            pointer-events: none;
+        }
+
+        .state-label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 11px;
+            fill: #2e7d32;
+            font-weight: bold;
+            pointer-events: none;
+            text-anchor: middle;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .state-label.hidden {
+            opacity: 0;
+        }
+
+        .country-label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 13px;
+            fill: #424242;
+            font-weight: normal;
+            font-style: italic;
+            pointer-events: none;
+            text-anchor: middle;
+        }
+
+        .capital-dot {
+            fill: #d32f2f;
+            stroke: white;
+            stroke-width: 1.5;
+            cursor: pointer;
+        }
+
+        .capital-dot:hover {
+            fill: #ff5252;
+            r: 5;
+        }
+
+        .capital-label {
+            font-family: 'Segoe UI', sans-serif;
+            font-size: 9px;
+            fill: #333;
+            pointer-events: none;
+            text-anchor: middle;
+            opacity: 1;
+            transition: opacity 0.3s;
+        }
+
+        .capital-label.hidden, .capital-dot.hidden {
+            opacity: 0;
+        }
+        }
+
+        .map-info {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            min-height: 60px;
+            border-left: 4px solid #667eea;
+        }
+
+        .map-info-title {
+            font-weight: bold;
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .map-info-capital {
+            color: #666;
+        }
+
+        .state-item, .country-item {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border-left: 4px solid #667eea;
+        }
+
+        .state-item:hover, .country-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            background: #f0f4ff;
+        }
+
+        .state-item.highlighted, .country-item.highlighted {
+            background: #fff3cd;
+            border-left-color: #ffc107;
+        }
+
+        .state-name, .country-name {
+            font-weight: bold;
+            color: #333;
+            font-size: 1.1em;
+        }
+
+        .capital {
+            color: #666;
+            font-size: 0.95em;
+            margin-top: 5px;
+        }
+
+        .quiz-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: bold;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .quiz-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .question {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        .options {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+
+        .option:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+
+        .option.correct {
+            background: #d4edda;
+            border-color: #28a745;
+            animation: correctAnswer 0.5s;
+        }
+
+        .option.incorrect {
+            background: #f8d7da;
+            border-color: #dc3545;
+            animation: incorrectAnswer 0.5s;
+        }
+
+        @keyframes correctAnswer {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        @keyframes incorrectAnswer {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .score {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 12px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .tab.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .states-grid, .countries-grid {
+            display: grid;
+            gap: 10px;
+            max-height: 600px;
+            overflow-y: auto;
+        }
+
+        .no-quiz {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+
+        .feedback {
+            margin-top: 15px;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .feedback.correct {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .feedback.incorrect {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #667eea;
+            font-size: 1.2em;
+        }
+
+        @media (max-width: 968px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🇩🇪 Deutschland Karte & Quiz</h1>
+            <p class="subtitle">Lerne die Bundesländer, Hauptstädte und Nachbarländer!</p>
+        </header>
+
+        <div class="main-content">
+            <!-- Karte Section -->
+            <div class="map-section">
+                <h2>📍 Geografie</h2>
+
+                <div class="tabs">
+                    <button class="tab active" onclick="switchTab('map')">Karte</button>
+                    <button class="tab" onclick="switchTab('states')">Bundesländer</button>
+                    <button class="tab" onclick="switchTab('countries')">Nachbarländer</button>
+                </div>
+
+                <div id="map-tab" class="tab-content active">
+                    <div class="interactive-map">
+                        <div class="loading" id="loading">Karte wird geladen...</div>
+                        <svg id="map-svg" viewBox="0 0 600 800"></svg>
+                        <div class="map-info" id="map-info">
+                            <div style="text-align: center; color: #999;">
+                                Klicke auf ein Bundesland auf der Karte
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="states-tab" class="tab-content">
+                    <div class="states-grid" id="states-list"></div>
+                </div>
+
+                <div id="countries-tab" class="tab-content">
+                    <div class="countries-grid" id="countries-list"></div>
+                </div>
+            </div>
+
+            <!-- Quiz Section -->
+            <div class="quiz-section">
+                <h2>🎯 Quiz</h2>
+
+                <div class="quiz-controls">
+                    <button onclick="startQuiz('states')">Bundesländer Quiz</button>
+                    <button onclick="startQuiz('countries')">Nachbarländer Quiz</button>
+                    <button onclick="startQuiz('mixed')">Gemischtes Quiz</button>
+                    <button onclick="startMapQuiz()" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">🗺️ Karten-Quiz</button>
+                </div>
+
+                <div class="score" id="score" style="display: none;">
+                    <div>Punktzahl: <span id="score-value">0</span> / <span id="total-questions">0</span></div>
+                    <div style="font-size: 0.9em; margin-top: 5px;">Richtig: <span id="correct-count">0</span> | Falsch: <span id="incorrect-count">0</span></div>
+                </div>
+
+                <div id="quiz-content">
+                    <div class="no-quiz">
+                        <p>👆 Wähle einen Quiz-Modus aus, um zu beginnen!</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Daten: Deutsche Bundesländer und Hauptstädte
+        const germanStates = [
+            { name: "Baden-Württemberg", capital: "Stuttgart", lat: 48.7758, lon: 9.1829 },
+            { name: "Bayern", capital: "München", lat: 48.1351, lon: 11.5820 },
+            { name: "Berlin", capital: "Berlin", lat: 52.5200, lon: 13.4050 },
+            { name: "Brandenburg", capital: "Potsdam", lat: 52.3906, lon: 13.0645 },
+            { name: "Bremen", capital: "Bremen", lat: 53.0793, lon: 8.8017 },
+            { name: "Hamburg", capital: "Hamburg", lat: 53.5511, lon: 9.9937 },
+            { name: "Hessen", capital: "Wiesbaden", lat: 50.0826, lon: 8.2400 },
+            { name: "Mecklenburg-Vorpommern", capital: "Schwerin", lat: 53.6355, lon: 11.4013 },
+            { name: "Niedersachsen", capital: "Hannover", lat: 52.3759, lon: 9.7320 },
+            { name: "Nordrhein-Westfalen", capital: "Düsseldorf", lat: 51.2277, lon: 6.7735 },
+            { name: "Rheinland-Pfalz", capital: "Mainz", lat: 49.9929, lon: 8.2473 },
+            { name: "Saarland", capital: "Saarbrücken", lat: 49.2401, lon: 6.9969 },
+            { name: "Sachsen", capital: "Dresden", lat: 51.0504, lon: 13.7373 },
+            { name: "Sachsen-Anhalt", capital: "Magdeburg", lat: 52.1205, lon: 11.6276 },
+            { name: "Schleswig-Holstein", capital: "Kiel", lat: 54.3233, lon: 10.1228 },
+            { name: "Thüringen", capital: "Erfurt", lat: 50.9848, lon: 11.0299 }
+        ];
+
+        // Daten: Nachbarländer und Hauptstädte
+        const neighboringCountries = [
+            { name: "Dänemark", capital: "Kopenhagen" },
+            { name: "Polen", capital: "Warschau" },
+            { name: "Tschechien", capital: "Prag" },
+            { name: "Österreich", capital: "Wien" },
+            { name: "Schweiz", capital: "Bern" },
+            { name: "Frankreich", capital: "Paris" },
+            { name: "Luxemburg", capital: "Luxemburg" },
+            { name: "Belgien", capital: "Brüssel" },
+            { name: "Niederlande", capital: "Amsterdam" }
+        ];
+
+        let currentQuiz = null;
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let correctCount = 0;
+        let incorrectCount = 0;
+        let answered = false;
+        let svg, projection, path;
+        let isMapQuizMode = false;
+        let mapQuizStates = [];
+
+        // Initialize
+        function init() {
+            displayStates();
+            displayCountries();
+            loadMap();
+        }
+
+        async function loadMap() {
+            const width = 600;
+            const height = 800;
+
+            svg = d3.select("#map-svg")
+                .attr("width", width)
+                .attr("height", height);
+
+            // Setup projection for Germany
+            projection = d3.geoMercator()
+                .center([10.4515, 51.1657])
+                .scale(2500)
+                .translate([width / 2, height / 2]);
+
+            path = d3.geoPath().projection(projection);
+
+            try {
+                // Load Germany states data from public API
+                const germanyData = await d3.json('https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/4_niedrig.geo.json');
+
+                // Load neighboring countries
+                const europeData = await d3.json('https://raw.githubusercontent.com/leakyMirror/map-of-europe/master/GeoJSON/europe.geojson');
+
+                // Filter neighboring countries
+                const neighbors = ['Denmark', 'Poland', 'Czech Republic', 'Austria', 'Switzerland', 'France', 'Luxembourg', 'Belgium', 'Netherlands'];
+                const neighborFeatures = europeData.features.filter(d => neighbors.includes(d.properties.NAME));
+
+                // Draw neighboring countries first (background)
+                svg.selectAll('.neighbor-region')
+                    .data(neighborFeatures)
+                    .enter()
+                    .append('path')
+                    .attr('class', 'neighbor-region')
+                    .attr('d', path);
+
+                // Draw country labels
+                svg.selectAll('.country-label')
+                    .data(neighborFeatures)
+                    .enter()
+                    .append('text')
+                    .attr('class', 'country-label')
+                    .attr('transform', d => {
+                        const centroid = path.centroid(d);
+                        return `translate(${centroid[0]}, ${centroid[1]})`;
+                    })
+                    .text(d => {
+                        const nameMap = {
+                            'Denmark': 'DÄNEMARK',
+                            'Poland': 'POLEN',
+                            'Czech Republic': 'TSCHECHIEN',
+                            'Austria': 'ÖSTERREICH',
+                            'Switzerland': 'SCHWEIZ',
+                            'France': 'FRANKREICH',
+                            'Luxembourg': 'LUXEMBURG',
+                            'Belgium': 'BELGIEN',
+                            'Netherlands': 'NIEDERLANDE'
+                        };
+                        return nameMap[d.properties.NAME] || d.properties.NAME;
+                    });
+
+                // Draw German states
+                svg.selectAll('.state-region')
+                    .data(germanyData.features)
+                    .enter()
+                    .append('path')
+                    .attr('class', 'state-region')
+                    .attr('d', path)
+                    .attr('data-state', d => d.properties.name)
+                    .on('click', function(event, d) {
+                        const stateName = d.properties.name;
+                        highlightRegion(stateName);
+                        showMapInfo(stateName);
+                        highlightListItem(stateName);
+                    });
+
+                // Add state labels
+                svg.selectAll('.state-label')
+                    .data(germanyData.features)
+                    .enter()
+                    .append('text')
+                    .attr('class', 'state-label')
+                    .attr('transform', d => {
+                        const centroid = path.centroid(d);
+                        return `translate(${centroid[0]}, ${centroid[1]})`;
+                    })
+                    .text(d => d.properties.name);
+
+                // Add capital dots
+                germanStates.forEach(state => {
+                    const coords = projection([state.lon, state.lat]);
+
+                    svg.append('circle')
+                        .attr('class', 'capital-dot')
+                        .attr('cx', coords[0])
+                        .attr('cy', coords[1])
+                        .attr('r', 3.5)
+                        .attr('data-state', state.name)
+                        .on('click', function() {
+                            highlightRegion(state.name);
+                            showMapInfo(state.name);
+                            highlightListItem(state.name);
+                        });
+
+                    svg.append('text')
+                        .attr('class', 'capital-label')
+                        .attr('x', coords[0])
+                        .attr('y', coords[1] - 6)
+                        .text(state.capital);
+                });
+
+                document.getElementById('loading').style.display = 'none';
+
+            } catch (error) {
+                console.error('Error loading map:', error);
+                document.getElementById('loading').innerHTML = '❌ Fehler beim Laden der Karte. Bitte Seite neu laden.';
+            }
+        }
+
+        function highlightRegion(stateName) {
+            // Remove all highlights
+            svg.selectAll('.state-region').classed('highlighted', false);
+
+            // Add highlight to selected region
+            svg.selectAll('.state-region')
+                .filter(function() {
+                    return d3.select(this).attr('data-state') === stateName;
+                })
+                .classed('highlighted', true);
+        }
+
+        function showMapInfo(regionName) {
+            const mapInfo = document.getElementById('map-info');
+
+            // Check if it's a German state
+            const state = germanStates.find(s => s.name === regionName);
+            if (state) {
+                mapInfo.innerHTML = `
+                    <div class="map-info-title">${state.name}</div>
+                    <div class="map-info-capital">Hauptstadt: ${state.capital}</div>
+                    <div style="margin-top: 8px; color: #667eea; font-weight: bold;">🇩🇪 Deutsches Bundesland</div>
+                `;
+                return;
+            }
+
+            // Check if it's a neighboring country
+            const country = neighboringCountries.find(c => c.name === regionName);
+            if (country) {
+                mapInfo.innerHTML = `
+                    <div class="map-info-title">${country.name}</div>
+                    <div class="map-info-capital">Hauptstadt: ${country.capital}</div>
+                    <div style="margin-top: 8px; color: #ff9800; font-weight: bold;">🌍 Nachbarland</div>
+                `;
+                return;
+            }
+        }
+
+        function highlightListItem(name) {
+            // Remove all previous highlights
+            document.querySelectorAll('.state-item, .country-item').forEach(item => {
+                item.classList.remove('highlighted');
+            });
+
+            // Highlight the matching item
+            document.querySelectorAll('.state-item, .country-item').forEach(item => {
+                const itemName = item.querySelector('.state-name, .country-name').textContent;
+                if (itemName === name) {
+                    item.classList.add('highlighted');
+                }
+            });
+        }
+
+        function displayStates() {
+            const statesList = document.getElementById('states-list');
+            statesList.innerHTML = germanStates.map(state => `
+                <div class="state-item" onclick="focusOnMap('${state.name}')">
+                    <div class="state-name">${state.name}</div>
+                    <div class="capital">Hauptstadt: ${state.capital}</div>
+                </div>
+            `).join('');
+        }
+
+        function displayCountries() {
+            const countriesList = document.getElementById('countries-list');
+            countriesList.innerHTML = neighboringCountries.map(country => `
+                <div class="country-item" onclick="focusOnMap('${country.name}')">
+                    <div class="country-name">${country.name}</div>
+                    <div class="capital">Hauptstadt: ${country.capital}</div>
+                </div>
+            `).join('');
+        }
+
+        function focusOnMap(name) {
+            // Switch to map tab
+            switchTabProgrammatically('map');
+
+            // Highlight the region
+            highlightRegion(name);
+            showMapInfo(name);
+            highlightListItem(name);
+
+            // Scroll to map
+            document.getElementById('map-svg').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+
+        function switchTabProgrammatically(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(t => {
+                if (tab === 'map' && t.textContent.includes('Karte')) {
+                    t.classList.add('active');
+                } else if (tab === 'states' && t.textContent.includes('Bundesländer')) {
+                    t.classList.add('active');
+                } else if (tab === 'countries' && t.textContent.includes('Nachbarländer')) {
+                    t.classList.add('active');
+                }
+            });
+
+            document.getElementById(tab + '-tab').classList.add('active');
+        }
+
+        function switchTab(tab) {
+            switchTabProgrammatically(tab);
+        }
+
+        function startQuiz(type) {
+            currentQuestionIndex = 0;
+            score = 0;
+            correctCount = 0;
+            incorrectCount = 0;
+            answered = false;
+
+            if (type === 'states') {
+                currentQuiz = [...germanStates];
+            } else if (type === 'countries') {
+                currentQuiz = [...neighboringCountries];
+            } else {
+                currentQuiz = [...germanStates, ...neighboringCountries];
+            }
+
+            // Shuffle quiz questions
+            currentQuiz = shuffleArray(currentQuiz);
+
+            document.getElementById('score').style.display = 'block';
+            updateScore();
+            showQuestion();
+        }
+
+        function shuffleArray(array) {
+            const newArray = [...array];
+            for (let i = newArray.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+            }
+            return newArray;
+        }
+
+        function showQuestion() {
+            if (currentQuestionIndex >= currentQuiz.length) {
+                showResults();
+                return;
+            }
+
+            answered = false;
+            const current = currentQuiz[currentQuestionIndex];
+            const questionType = Math.random() > 0.5 ? 'capital' : 'state';
+
+            let question, correctAnswer, options;
+
+            if (questionType === 'capital') {
+                question = `Was ist die Hauptstadt von ${current.name}?`;
+                correctAnswer = current.capital;
+
+                const allData = [...germanStates, ...neighboringCountries];
+                const wrongOptions = allData
+                    .filter(item => item.capital !== correctAnswer)
+                    .map(item => item.capital)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, 3);
+
+                options = shuffleArray([correctAnswer, ...wrongOptions]);
+            } else {
+                question = `${current.capital} ist die Hauptstadt von welchem Bundesland/Land?`;
+                correctAnswer = current.name;
+
+                const allData = [...germanStates, ...neighboringCountries];
+                const wrongOptions = allData
+                    .filter(item => item.name !== correctAnswer)
+                    .map(item => item.name)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, 3);
+
+                options = shuffleArray([correctAnswer, ...wrongOptions]);
+            }
+
+            const quizContent = document.getElementById('quiz-content');
+            quizContent.innerHTML = `
+                <div class="quiz-card">
+                    <div class="question">Frage ${currentQuestionIndex + 1} von ${currentQuiz.length}</div>
+                    <div class="question">${question}</div>
+                    <div class="options">
+                        ${options.map(option => `
+                            <div class="option" onclick="checkAnswer('${option.replace(/'/g, "\\'")}', '${correctAnswer.replace(/'/g, "\\'")}')">
+                                ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div id="feedback"></div>
+                </div>
+            `;
+        }
+
+        function checkAnswer(selected, correct) {
+            if (answered) return;
+            answered = true;
+
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+                if (option.textContent.trim() === correct) {
+                    option.classList.add('correct');
+                }
+                if (option.textContent.trim() === selected && selected !== correct) {
+                    option.classList.add('incorrect');
+                }
+            });
+
+            if (selected === correct) {
+                score++;
+                correctCount++;
+                feedback.className = 'feedback correct';
+                feedback.textContent = '✓ Richtig! Sehr gut!';
+            } else {
+                incorrectCount++;
+                feedback.className = 'feedback incorrect';
+                feedback.textContent = `✗ Leider falsch. Die richtige Antwort ist: ${correct}`;
+            }
+
+            updateScore();
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showQuestion();
+            }, 2500);
+        }
+
+        function updateScore() {
+            document.getElementById('score-value').textContent = score;
+            document.getElementById('total-questions').textContent = currentQuiz.length;
+            document.getElementById('correct-count').textContent = correctCount;
+            document.getElementById('incorrect-count').textContent = incorrectCount;
+        }
+
+        function showResults() {
+            const percentage = Math.round((score / currentQuiz.length) * 100);
+            let message = '';
+
+            if (percentage === 100) {
+                message = '🏆 Perfekt! Du bist ein Geografie-Experte!';
+            } else if (percentage >= 80) {
+                message = '🌟 Ausgezeichnet! Sehr gute Leistung!';
+            } else if (percentage >= 60) {
+                message = '👍 Gut gemacht! Weiter so!';
+            } else {
+                message = '📚 Übe weiter, du schaffst das!';
+            }
+
+            const quizContent = document.getElementById('quiz-content');
+            quizContent.innerHTML = `
+                <div class="quiz-card" style="text-align: center;">
+                    <h3 style="font-size: 2em; margin-bottom: 20px;">Quiz Beendet!</h3>
+                    <div style="font-size: 3em; margin: 20px 0;">${percentage}%</div>
+                    <p style="font-size: 1.3em; color: #667eea; font-weight: bold;">${message}</p>
+                    <p style="margin-top: 20px; font-size: 1.1em;">
+                        Du hast <strong>${score}</strong> von <strong>${currentQuiz.length}</strong> Fragen richtig beantwortet.
+                    </p>
+                    <button onclick="location.reload()" style="margin-top: 30px; font-size: 1.1em;">
+                        Neues Quiz starten
+                    </button>
+                </div>
+            `;
+        }
+
+        // Map Quiz Mode Functions
+        function startMapQuiz() {
+            isMapQuizMode = true;
+            currentQuestionIndex = 0;
+            score = 0;
+            correctCount = 0;
+            incorrectCount = 0;
+            answered = false;
+
+            // Shuffle states for the quiz
+            mapQuizStates = shuffleArray([...germanStates]);
+            currentQuiz = mapQuizStates;
+
+            // Switch to map tab
+            switchTabProgrammatically('map');
+
+            // Hide all labels and capitals on the map
+            svg.selectAll('.state-label').classed('hidden', true);
+            svg.selectAll('.capital-label').classed('hidden', true);
+            svg.selectAll('.capital-dot').classed('hidden', true);
+
+            // Make all states empty (white)
+            svg.selectAll('.state-region').classed('empty', true);
+
+            document.getElementById('score').style.display = 'block';
+            updateScore();
+            showMapQuestion();
+        }
+
+        function showMapQuestion() {
+            if (currentQuestionIndex >= mapQuizStates.length) {
+                endMapQuiz();
+                return;
+            }
+
+            answered = false;
+            const current = mapQuizStates[currentQuestionIndex];
+
+            // Highlight the current state on the map
+            svg.selectAll('.state-region').classed('current-question', false);
+            svg.selectAll('.state-region')
+                .filter(function() {
+                    return d3.select(this).attr('data-state') === current.name;
+                })
+                .classed('current-question', true);
+
+            // Generate question
+            const questionType = Math.random() > 0.5 ? 'name' : 'capital';
+            let question, correctAnswer, options;
+
+            if (questionType === 'name') {
+                question = 'Welches Bundesland ist markiert?';
+                correctAnswer = current.name;
+
+                const wrongOptions = germanStates
+                    .filter(s => s.name !== correctAnswer)
+                    .map(s => s.name)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, 3);
+
+                options = shuffleArray([correctAnswer, ...wrongOptions]);
+            } else {
+                question = 'Was ist die Hauptstadt des markierten Bundeslandes?';
+                correctAnswer = current.capital;
+
+                const wrongOptions = germanStates
+                    .filter(s => s.capital !== correctAnswer)
+                    .map(s => s.capital)
+                    .sort(() => Math.random() - 0.5)
+                    .slice(0, 3);
+
+                options = shuffleArray([correctAnswer, ...wrongOptions]);
+            }
+
+            const quizContent = document.getElementById('quiz-content');
+            quizContent.innerHTML = `
+                <div class="quiz-card">
+                    <div class="question">Frage ${currentQuestionIndex + 1} von ${mapQuizStates.length}</div>
+                    <div class="question">${question}</div>
+                    <div style="background: #fff3cd; padding: 10px; border-radius: 5px; margin-bottom: 15px; text-align: center; color: #856404;">
+                        👈 Schau auf die Karte links!
+                    </div>
+                    <div class="options">
+                        ${options.map(option => `
+                            <div class="option" onclick="checkMapAnswer('${option.replace(/'/g, "\\'")}', '${correctAnswer.replace(/'/g, "\\'")}')">
+                                ${option}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div id="feedback"></div>
+                </div>
+            `;
+        }
+
+        function checkMapAnswer(selected, correct) {
+            if (answered) return;
+            answered = true;
+
+            const current = mapQuizStates[currentQuestionIndex];
+            const options = document.querySelectorAll('.option');
+            const feedback = document.getElementById('feedback');
+
+            options.forEach(option => {
+                option.style.pointerEvents = 'none';
+                if (option.textContent.trim() === correct) {
+                    option.classList.add('correct');
+                }
+                if (option.textContent.trim() === selected && selected !== correct) {
+                    option.classList.add('incorrect');
+                }
+            });
+
+            if (selected === correct) {
+                score++;
+                correctCount++;
+                feedback.className = 'feedback correct';
+                feedback.innerHTML = `✓ Richtig!<br><strong>${current.name}</strong> - Hauptstadt: ${current.capital}`;
+
+                // Reveal the state on the map
+                svg.selectAll('.state-region')
+                    .filter(function() {
+                        return d3.select(this).attr('data-state') === current.name;
+                    })
+                    .classed('current-question', false)
+                    .classed('empty', false)
+                    .classed('correct', true);
+
+                // Show label and capital for this state
+                svg.selectAll('.state-label')
+                    .filter(function(d) {
+                        return d && d.properties && d.properties.name === current.name;
+                    })
+                    .classed('hidden', false);
+
+                svg.selectAll('.capital-dot, .capital-label')
+                    .filter(function() {
+                        return d3.select(this).attr('data-state') === current.name;
+                    })
+                    .classed('hidden', false);
+
+            } else {
+                incorrectCount++;
+                feedback.className = 'feedback incorrect';
+                feedback.innerHTML = `✗ Leider falsch. Das ist <strong>${current.name}</strong> mit der Hauptstadt ${current.capital}`;
+
+                // Still reveal it but keep it pulsing
+                setTimeout(() => {
+                    svg.selectAll('.state-region')
+                        .filter(function() {
+                            return d3.select(this).attr('data-state') === current.name;
+                        })
+                        .classed('current-question', false)
+                        .classed('empty', false);
+
+                    svg.selectAll('.state-label')
+                        .filter(function(d) {
+                            return d && d.properties && d.properties.name === current.name;
+                        })
+                        .classed('hidden', false);
+
+                    svg.selectAll('.capital-dot, .capital-label')
+                        .filter(function() {
+                            return d3.select(this).attr('data-state') === current.name;
+                        })
+                        .classed('hidden', false);
+                }, 500);
+            }
+
+            updateScore();
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                showMapQuestion();
+            }, 3000);
+        }
+
+        function endMapQuiz() {
+            isMapQuizMode = false;
+
+            // Reveal all remaining states
+            svg.selectAll('.state-region')
+                .classed('empty', false)
+                .classed('current-question', false);
+
+            svg.selectAll('.state-label').classed('hidden', false);
+            svg.selectAll('.capital-label').classed('hidden', false);
+            svg.selectAll('.capital-dot').classed('hidden', false);
+
+            showResults();
+        }
+
+        // Start app
+        window.onload = init;
+    </script>
+</body>
+</html>
