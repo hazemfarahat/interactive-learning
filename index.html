@@ -588,9 +588,20 @@
                         };
                         const countryName = nameMap[d.properties.NAME] || d.properties.NAME;
 
-                        // Highlight country border
-                        svg.selectAll('.neighbor-region').style('stroke-width', '1.5');
-                        d3.select(this).style('stroke-width', '3').style('stroke', '#ff6b00');
+                        // Reset all highlights
+                        svg.selectAll('.neighbor-region')
+                            .style('stroke-width', '1.5')
+                            .style('stroke', '#90a4ae');
+                        svg.selectAll('.state-region').classed('highlighted', false);
+
+                        // Highlight this country border
+                        d3.select(this)
+                            .style('stroke-width', '3')
+                            .style('stroke', '#ff6b00');
+
+                        showMapInfo(countryName);
+                        highlightListItem(countryName);
+                    });
 
                         showMapInfo(countryName);
                         highlightListItem(countryName);
@@ -704,16 +715,33 @@
             }
         }
 
-        function highlightRegion(stateName) {
-            // Remove all highlights
+        function highlightRegion(name) {
+            // Remove all highlights from states
             svg.selectAll('.state-region').classed('highlighted', false);
 
-            // Add highlight to selected region
-            svg.selectAll('.state-region')
-                .filter(function() {
-                    return d3.select(this).attr('data-state') === stateName;
-                })
-                .classed('highlighted', true);
+            // Reset all neighbor country highlights
+            svg.selectAll('.neighbor-region')
+                .style('stroke-width', '1.5')
+                .style('stroke', '#90a4ae');
+
+            // Check if it's a German state
+            const state = germanStates.find(s => s.name === name);
+            if (state) {
+                // Highlight the selected state region
+                svg.selectAll('.state-region')
+                    .filter(function() {
+                        return d3.select(this).attr('data-state') === name;
+                    })
+                    .classed('highlighted', true);
+            } else {
+                // It's a neighboring country - highlight its border
+                svg.selectAll('.neighbor-region')
+                    .filter(function() {
+                        return d3.select(this).attr('data-country') === name;
+                    })
+                    .style('stroke-width', '3')
+                    .style('stroke', '#ff6b00');
+            }
         }
 
         function showMapInfo(regionName) {
@@ -834,6 +862,11 @@
                 .classed('current-question', false)
                 .classed('correct', false)
                 .classed('highlighted', false);
+
+            // Reset neighbor country borders
+            svg.selectAll('.neighbor-region')
+                .style('stroke-width', '1.5')
+                .style('stroke', '#90a4ae');
         }
 
         function startQuiz(type) {
