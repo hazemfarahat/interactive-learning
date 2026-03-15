@@ -719,6 +719,11 @@
             // Switch to map tab
             switchTabProgrammatically('map');
 
+            // Make sure map is in normal mode
+            if (!isMapQuizMode && svg) {
+                resetMapToNormalMode();
+            }
+
             // Highlight the region
             highlightRegion(name);
             showMapInfo(name);
@@ -744,18 +749,43 @@
             });
 
             document.getElementById(tab + '-tab').classList.add('active');
+
+            // Reset map to normal mode when switching to map tab (unless in quiz mode)
+            if (tab === 'map' && !isMapQuizMode && svg) {
+                resetMapToNormalMode();
+            }
         }
 
         function switchTab(tab) {
             switchTabProgrammatically(tab);
         }
 
+        function resetMapToNormalMode() {
+            // Show all labels and capitals
+            svg.selectAll('.state-label').classed('hidden', false);
+            svg.selectAll('.capital-label').classed('hidden', false);
+            svg.selectAll('.capital-dot').classed('hidden', false);
+
+            // Reset all states to normal green color
+            svg.selectAll('.state-region')
+                .classed('empty', false)
+                .classed('current-question', false)
+                .classed('correct', false)
+                .classed('highlighted', false);
+        }
+
         function startQuiz(type) {
+            isMapQuizMode = false; // Regular quiz, not map quiz
             currentQuestionIndex = 0;
             score = 0;
             correctCount = 0;
             incorrectCount = 0;
             answered = false;
+
+            // Reset map to normal mode
+            if (svg) {
+                resetMapToNormalMode();
+            }
 
             if (type === 'states') {
                 currentQuiz = [...germanStates];
