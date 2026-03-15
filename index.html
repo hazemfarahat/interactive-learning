@@ -557,9 +557,58 @@
                     .enter()
                     .append('path')
                     .attr('class', 'neighbor-region')
-                    .attr('d', path);
+                    .attr('d', path)
+                    .attr('data-country', d => {
+                        const nameMap = {
+                            'Denmark': 'Dänemark',
+                            'Poland': 'Polen',
+                            'Czech Republic': 'Tschechien',
+                            'Austria': 'Österreich',
+                            'Switzerland': 'Schweiz',
+                            'France': 'Frankreich',
+                            'Luxembourg': 'Luxemburg',
+                            'Belgium': 'Belgien',
+                            'Netherlands': 'Niederlande'
+                        };
+                        return nameMap[d.properties.NAME] || d.properties.NAME;
+                    })
+                    .style('cursor', 'pointer')
+                    .style('pointer-events', 'all')
+                    .on('click', function(event, d) {
+                        const nameMap = {
+                            'Denmark': 'Dänemark',
+                            'Poland': 'Polen',
+                            'Czech Republic': 'Tschechien',
+                            'Austria': 'Österreich',
+                            'Switzerland': 'Schweiz',
+                            'France': 'Frankreich',
+                            'Luxembourg': 'Luxemburg',
+                            'Belgium': 'Belgien',
+                            'Netherlands': 'Niederlande'
+                        };
+                        const countryName = nameMap[d.properties.NAME] || d.properties.NAME;
 
-                // Draw country labels
+                        // Highlight country border
+                        svg.selectAll('.neighbor-region').style('stroke-width', '1.5');
+                        d3.select(this).style('stroke-width', '3').style('stroke', '#ff6b00');
+
+                        showMapInfo(countryName);
+                        highlightListItem(countryName);
+                    });
+
+                // Draw country labels with better positioning
+                const countryLabelPositions = {
+                    'Denmark': { dx: 0, dy: 0 },
+                    'Poland': { dx: 30, dy: -20 },  // Shift right and up
+                    'Czech Republic': { dx: 0, dy: 5 },
+                    'Austria': { dx: 0, dy: 0 },
+                    'Switzerland': { dx: 0, dy: 0 },
+                    'France': { dx: -30, dy: 0 },  // Shift left
+                    'Luxembourg': { dx: 0, dy: 0 },
+                    'Belgium': { dx: 0, dy: 0 },
+                    'Netherlands': { dx: 0, dy: -10 }
+                };
+
                 svg.selectAll('.country-label')
                     .data(neighborFeatures)
                     .enter()
@@ -567,7 +616,8 @@
                     .attr('class', 'country-label')
                     .attr('transform', d => {
                         const centroid = path.centroid(d);
-                        return `translate(${centroid[0]}, ${centroid[1]})`;
+                        const adjustment = countryLabelPositions[d.properties.NAME] || { dx: 0, dy: 0 };
+                        return `translate(${centroid[0] + adjustment.dx}, ${centroid[1] + adjustment.dy})`;
                     })
                     .text(d => {
                         const nameMap = {
@@ -599,7 +649,14 @@
                         highlightListItem(stateName);
                     });
 
-                // Add state labels
+                // Add state labels with better positioning for small states
+                const stateLabelAdjustments = {
+                    'Hamburg': { dy: 0, fontSize: '10px' },
+                    'Bremen': { dy: 0, fontSize: '9px' },
+                    'Berlin': { dy: 0, fontSize: '10px' },
+                    'Saarland': { dy: 0, fontSize: '9px' }
+                };
+
                 svg.selectAll('.state-label')
                     .data(germanyData.features)
                     .enter()
@@ -607,7 +664,12 @@
                     .attr('class', 'state-label')
                     .attr('transform', d => {
                         const centroid = path.centroid(d);
-                        return `translate(${centroid[0]}, ${centroid[1]})`;
+                        const adjustment = stateLabelAdjustments[d.properties.name] || { dy: 0 };
+                        return `translate(${centroid[0]}, ${centroid[1] + (adjustment.dy || 0)})`;
+                    })
+                    .style('font-size', d => {
+                        const adjustment = stateLabelAdjustments[d.properties.name];
+                        return adjustment && adjustment.fontSize ? adjustment.fontSize : '11px';
                     })
                     .text(d => d.properties.name);
 
