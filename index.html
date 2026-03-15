@@ -453,9 +453,12 @@
                 <h2>🎯 Quiz</h2>
 
                 <div class="quiz-controls">
-                    <button onclick="startQuiz('states')">Bundesländer Quiz</button>
-                    <button onclick="startQuiz('countries')">Nachbarländer Quiz</button>
-                    <button onclick="startQuiz('mixed')">Gemischtes Quiz</button>
+                    <button onclick="startQuiz('states')">📍 Bundesländer & Hauptstädte</button>
+                    <button onclick="startQuiz('countries')">🌍 Nachbarländer</button>
+                    <button onclick="startQuiz('cityStates')">🏛️ Stadtstaaten</button>
+                    <button onclick="startQuiz('reunification')">🇩🇪 Wiedervereinigung</button>
+                    <button onclick="startQuiz('government')">👔 Regierung</button>
+                    <button onclick="startQuiz('examPrep')">📚 Prüfungsvorbereitung</button>
                     <button onclick="startMapQuiz()" style="background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%);">🗺️ Karten-Quiz</button>
                 </div>
 
@@ -507,6 +510,61 @@
             { name: "Niederlande", capital: "Amsterdam" }
         ];
 
+        // Comprehensive Quiz Bank for Exam Preparation
+        const quizBank = {
+            cityStates: [
+                { q: "Wie viele Stadtstaaten hat Deutschland?", a: "3", w: ["2", "4", "5"] },
+                { q: "Welche sind die drei Stadtstaaten?", a: "Berlin, Hamburg, Bremen", w: ["Berlin, Hamburg, München", "Berlin, Bremen, Köln", "Hamburg, Bremen, Frankfurt"] },
+                { q: "Wie heißt der Regierungschef eines Stadtstaates?", a: "Bürgermeister", w: ["Ministerpräsident", "Minister", "Bundeskanzler"] },
+                { q: "Welchen Titel hat der Regierungschef von Berlin?", a: "Bürgermeister", w: ["Ministerpräsident", "Bundeskanzler", "Minister"] },
+                { q: "Welchen Titel hat der Regierungschef von Hamburg?", a: "Bürgermeister", w: ["Ministerpräsident", "Bundeskanzler", "Minister"] },
+                { q: "Welchen Titel hat der Regierungschef von Bremen?", a: "Bürgermeister", w: ["Ministerpräsident", "Bundeskanzler", "Minister"] },
+                { q: "Ist Berlin ein Stadtstaat?", a: "Ja", w: ["Nein"] },
+                { q: "Ist Hamburg ein Stadtstaat?", a: "Ja", w: ["Nein"] },
+                { q: "Ist Bremen ein Stadtstaat?", a: "Ja", w: ["Nein"] }
+            ],
+            government: [
+                { q: "Wie viele Flächenländer hat Deutschland?", a: "13", w: ["12", "14", "15"] },
+                { q: "Wie heißt der Regierungschef eines Flächenlandes?", a: "Ministerpräsident", w: ["Bürgermeister", "Minister", "Bundeskanzler"] },
+                { q: "Welchen Titel hat der Regierungschef von Bayern?", a: "Ministerpräsident", w: ["Bürgermeister", "Bundeskanzler", "Minister"] },
+                { q: "Welchen Titel hat der Regierungschef von Baden-Württemberg?", a: "Ministerpräsident", w: ["Bürgermeister", "Bundeskanzler", "Minister"] },
+                { q: "Welchen Titel hat der Regierungschef von Sachsen?", a: "Ministerpräsident", w: ["Bürgermeister", "Bundeskanzler", "Minister"] },
+                { q: "Welchen Titel hat der Regierungschef von Hessen?", a: "Ministerpräsident", w: ["Bürgermeister", "Bundeskanzler", "Minister"] },
+                { q: "Ist Nordrhein-Westfalen ein Flächenland?", a: "Ja", w: ["Nein"] },
+                { q: "Ist Bayern ein Flächenland?", a: "Ja", w: ["Nein"] },
+                { q: "Ist Hamburg ein Flächenland?", a: "Nein", w: ["Ja"] }
+            ],
+            reunification: [
+                { q: "Wann vereinigten sich die Bundesrepublik und die DDR?", a: "3. Oktober 1990", w: ["9. November 1989", "1. Januar 1990", "1. Juli 1990"] },
+                { q: "Die Bundesrepublik Deutschland besteht in ihren heutigen Grenzen seit dem...?", a: "3. Oktober 1990", w: ["9. November 1989", "1989", "1991"] },
+                { q: "Was bedeutet DDR?", a: "Deutsche Demokratische Republik", w: ["Deutsche Demokratie Regierung", "Deutscher Demokratischer Rat", "Deutsche Demokraten Republik"] },
+                { q: "Die DDR lag im...?", a: "Osten", w: ["Westen", "Süden", "Norden"] },
+                { q: "Die Bundesrepublik lag im...?", a: "Westen", w: ["Osten", "Süden", "Norden"] },
+                { q: "Der 3. Oktober ist unser...?", a: "Nationalfeiertag", w: ["Geburtstag", "Urlaubstag", "Feiertag"] },
+                { q: "Was ist die Bundeshauptstadt von Deutschland?", a: "Berlin", w: ["Bonn", "Hamburg", "München"] },
+                { q: "Seit wann ist Berlin die Bundeshauptstadt?", a: "3. Oktober 1990", w: ["9. November 1989", "1989", "1991"] },
+                { q: "Berlin ist seither die...?", a: "Bundeshauptstadt", w: ["Landeshauptstadt", "Kreisstadt", "Hauptstadt"] },
+                { q: "Wie viele Bundesländer hat Deutschland?", a: "16", w: ["15", "17", "14"] },
+                { q: "Jedes Bundesland hat eine...?", a: "Landeshauptstadt", w: ["Bundeshauptstadt", "Kreisstadt", "Bezirksstadt"] },
+                { q: "Was hat jedes Bundesland?", a: "Eine Landeshauptstadt", w: ["Einen Bundeskanzler", "Einen Bürgermeister", "Eine Bundeshauptstadt"] }
+            ],
+            advanced: [
+                { q: "Berlin ist gleichzeitig Bundeshauptstadt und...?", a: "Stadtstaat", w: ["Flächenland", "Landkreis", "Bezirk"] },
+                { q: "Berlin ist die Landeshauptstadt von...?", a: "Berlin", w: ["Brandenburg", "Deutschland", "Sachsen"] },
+                { q: "Wie viele Nachbarländer hat Deutschland?", a: "9", w: ["8", "10", "7"] },
+                { q: "Welches Land grenzt an Deutschland im Norden?", a: "Dänemark", w: ["Schweden", "Norwegen", "Polen"] },
+                { q: "Welches Land grenzt an Deutschland im Osten?", a: "Polen", w: ["Russland", "Ukraine", "Slowakei"] },
+                { q: "Welches Land grenzt an Deutschland im Süden?", a: "Österreich", w: ["Italien", "Slowenien", "Ungarn"] },
+                { q: "Potsdam ist die Hauptstadt von...?", a: "Brandenburg", w: ["Berlin", "Sachsen", "Sachsen-Anhalt"] },
+                { q: "Schwerin ist die Hauptstadt von...?", a: "Mecklenburg-Vorpommern", w: ["Schleswig-Holstein", "Brandenburg", "Niedersachsen"] },
+                { q: "Magdeburg ist die Hauptstadt von...?", a: "Sachsen-Anhalt", w: ["Sachsen", "Thüringen", "Brandenburg"] },
+                { q: "Erfurt ist die Hauptstadt von...?", a: "Thüringen", w: ["Sachsen", "Sachsen-Anhalt", "Hessen"] },
+                { q: "Mainz ist die Hauptstadt von...?", a: "Rheinland-Pfalz", w: ["Hessen", "Saarland", "Baden-Württemberg"] },
+                { q: "Saarbrücken ist die Hauptstadt von...?", a: "Saarland", w: ["Rheinland-Pfalz", "Hessen", "Baden-Württemberg"] },
+                { q: "Kiel ist die Hauptstadt von...?", a: "Schleswig-Holstein", w: ["Hamburg", "Niedersachsen", "Mecklenburg-Vorpommern"] }
+            ]
+        };
+
         let currentQuiz = null;
         let currentQuestionIndex = 0;
         let score = 0;
@@ -528,6 +586,8 @@
             const width = 600;
             const height = 800;
 
+            console.log('🗺️ Starting map load...');
+
             svg = d3.select("#map-svg")
                 .attr("width", width)
                 .attr("height", height);
@@ -541,15 +601,20 @@
             path = d3.geoPath().projection(projection);
 
             try {
+                console.log('📥 Loading Germany GeoJSON...');
                 // Load Germany states data from public API
                 const germanyData = await d3.json('https://raw.githubusercontent.com/isellsoap/deutschlandGeoJSON/main/2_bundeslaender/4_niedrig.geo.json');
+                console.log('✅ Germany data loaded:', germanyData.features ? germanyData.features.length + ' states' : 'ERROR');
 
+                console.log('📥 Loading Europe GeoJSON...');
                 // Load neighboring countries
                 const europeData = await d3.json('https://raw.githubusercontent.com/leakyMirror/map-of-europe/master/GeoJSON/europe.geojson');
+                console.log('✅ Europe data loaded:', europeData.features ? europeData.features.length + ' countries' : 'ERROR');
 
                 // Filter neighboring countries
                 const neighbors = ['Denmark', 'Poland', 'Czech Republic', 'Austria', 'Switzerland', 'France', 'Luxembourg', 'Belgium', 'Netherlands'];
                 const neighborFeatures = europeData.features.filter(d => neighbors.includes(d.properties.NAME));
+                console.log('✅ Filtered neighbors:', neighborFeatures.length);
 
                 // Draw neighboring countries first (background)
                 svg.selectAll('.neighbor-region')
@@ -706,8 +771,10 @@
                 document.getElementById('loading').style.display = 'none';
 
             } catch (error) {
-                console.error('Error loading map:', error);
-                document.getElementById('loading').innerHTML = '❌ Fehler beim Laden der Karte. Bitte Seite neu laden.';
+                console.error('❌ Error loading map:', error);
+                console.error('Error details:', error.message);
+                console.error('Error stack:', error.stack);
+                document.getElementById('loading').innerHTML = `❌ Fehler beim Laden der Karte: ${error.message}<br><small>Bitte Seite neu laden oder Internetverbindung prüfen.</small>`;
             }
         }
 
@@ -878,12 +945,67 @@
                 resetMapToNormalMode();
             }
 
+            // Build quiz based on type
             if (type === 'states') {
-                currentQuiz = [...germanStates];
+                // Original states quiz
+                currentQuiz = [...germanStates].map(state => ({
+                    type: 'state-capital',
+                    state: state
+                }));
             } else if (type === 'countries') {
-                currentQuiz = [...neighboringCountries];
+                // Original countries quiz
+                currentQuiz = [...neighboringCountries].map(country => ({
+                    type: 'country-capital',
+                    country: country
+                }));
+            } else if (type === 'cityStates') {
+                // City states quiz from quiz bank
+                currentQuiz = quizBank.cityStates.map(q => ({
+                    type: 'quiz-bank',
+                    data: q
+                }));
+            } else if (type === 'government') {
+                // Government quiz from quiz bank
+                currentQuiz = quizBank.government.map(q => ({
+                    type: 'quiz-bank',
+                    data: q
+                }));
+            } else if (type === 'reunification') {
+                // Reunification quiz from quiz bank
+                currentQuiz = quizBank.reunification.map(q => ({
+                    type: 'quiz-bank',
+                    data: q
+                }));
+            } else if (type === 'examPrep') {
+                // Comprehensive exam prep - mix everything
+                let allQuestions = [];
+
+                // Add some state/capital questions
+                germanStates.slice(0, 8).forEach(state => {
+                    allQuestions.push({ type: 'state-capital', state: state });
+                });
+
+                // Add neighbor questions
+                neighboringCountries.slice(0, 4).forEach(country => {
+                    allQuestions.push({ type: 'country-capital', country: country });
+                });
+
+                // Add all quiz bank questions
+                allQuestions = allQuestions.concat(
+                    quizBank.cityStates.map(q => ({ type: 'quiz-bank', data: q })),
+                    quizBank.government.map(q => ({ type: 'quiz-bank', data: q })),
+                    quizBank.reunification.map(q => ({ type: 'quiz-bank', data: q })),
+                    quizBank.advanced.map(q => ({ type: 'quiz-bank', data: q }))
+                );
+
+                currentQuiz = allQuestions;
             } else {
-                currentQuiz = [...germanStates, ...neighboringCountries];
+                // Mixed - original behavior
+                currentQuiz = [...germanStates, ...neighboringCountries].map(item => ({
+                    type: item.capital ? (germanStates.includes(item) ? 'state-capital' : 'country-capital') : 'state-capital',
+                    state: item,
+                    country: item
+                }));
             }
 
             // Shuffle quiz questions
@@ -911,30 +1033,87 @@
 
             answered = false;
             const current = currentQuiz[currentQuestionIndex];
-            const questionType = Math.random() > 0.5 ? 'capital' : 'state';
-
             let question, correctAnswer, options;
 
-            if (questionType === 'capital') {
-                question = `Was ist die Hauptstadt von ${current.name}?`;
-                correctAnswer = current.capital;
+            // Handle new quiz bank format
+            if (current.type === 'quiz-bank') {
+                question = current.data.q;
+                correctAnswer = current.data.a;
+                options = shuffleArray([correctAnswer, ...current.data.w]);
+            }
+            // Handle state-capital format
+            else if (current.type === 'state-capital' && current.state) {
+                const questionType = Math.random() > 0.5 ? 'capital' : 'state';
+
+                if (questionType === 'capital') {
+                    question = `Was ist die Hauptstadt von ${current.state.name}?`;
+                    correctAnswer = current.state.capital;
+
+                    const wrongOptions = germanStates
+                        .filter(item => item.capital !== correctAnswer)
+                        .map(item => item.capital)
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 3);
+
+                    options = shuffleArray([correctAnswer, ...wrongOptions]);
+                } else {
+                    question = `${current.state.capital} ist die Hauptstadt von welchem Bundesland?`;
+                    correctAnswer = current.state.name;
+
+                    const wrongOptions = germanStates
+                        .filter(item => item.name !== correctAnswer)
+                        .map(item => item.name)
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 3);
+
+                    options = shuffleArray([correctAnswer, ...wrongOptions]);
+                }
+            }
+            // Handle country-capital format
+            else if (current.type === 'country-capital' && current.country) {
+                const questionType = Math.random() > 0.5 ? 'capital' : 'country';
+
+                if (questionType === 'capital') {
+                    question = `Was ist die Hauptstadt von ${current.country.name}?`;
+                    correctAnswer = current.country.capital;
+
+                    const wrongOptions = neighboringCountries
+                        .filter(item => item.capital !== correctAnswer)
+                        .map(item => item.capital)
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 3);
+
+                    options = shuffleArray([correctAnswer, ...wrongOptions]);
+                } else {
+                    question = `${current.country.capital} ist die Hauptstadt von welchem Land?`;
+                    correctAnswer = current.country.name;
+
+                    const wrongOptions = neighboringCountries
+                        .filter(item => item.name !== correctAnswer)
+                        .map(item => item.name)
+                        .sort(() => Math.random() - 0.5)
+                        .slice(0, 3);
+
+                    options = shuffleArray([correctAnswer, ...wrongOptions]);
+                }
+            }
+            // Fallback for old format
+            else {
+                const questionType = Math.random() > 0.5 ? 'capital' : 'state';
+                const item = current.state || current.country || current;
+
+                if (questionType === 'capital') {
+                    question = `Was ist die Hauptstadt von ${item.name}?`;
+                    correctAnswer = item.capital;
+                } else {
+                    question = `${item.capital} ist die Hauptstadt von welchem Bundesland/Land?`;
+                    correctAnswer = item.name;
+                }
 
                 const allData = [...germanStates, ...neighboringCountries];
                 const wrongOptions = allData
-                    .filter(item => item.capital !== correctAnswer)
-                    .map(item => item.capital)
-                    .sort(() => Math.random() - 0.5)
-                    .slice(0, 3);
-
-                options = shuffleArray([correctAnswer, ...wrongOptions]);
-            } else {
-                question = `${current.capital} ist die Hauptstadt von welchem Bundesland/Land?`;
-                correctAnswer = current.name;
-
-                const allData = [...germanStates, ...neighboringCountries];
-                const wrongOptions = allData
-                    .filter(item => item.name !== correctAnswer)
-                    .map(item => item.name)
+                    .filter(i => (questionType === 'capital' ? i.capital : i.name) !== correctAnswer)
+                    .map(i => questionType === 'capital' ? i.capital : i.name)
                     .sort(() => Math.random() - 0.5)
                     .slice(0, 3);
 
@@ -954,6 +1133,9 @@
                         `).join('')}
                     </div>
                     <div id="feedback"></div>
+                </div>
+            `;
+        }
                 </div>
             `;
         }
